@@ -1,30 +1,21 @@
-from tabnanny import verbose
 import gym
 from stable_baselines3 import PPO
 import training
 import os
+import time
 
-models_dir = "models/PPO"
+models_dir = f"models/PPO{int(time.time())}"
 logdir = "logs"
 
-if not os.path.exists(models_dir):
-    os.makedirs(models_dir)
-
-if not os.path.exists(logdir):
-    os.makedirs(logdir)
+os.makedirs(models_dir, exist_ok=True)
+os.makedirs(logdir, exist_ok=True)
 
 env = gym.make("Gray-v0")
 
-model = PPO("MlpPolicy", env, verbose=1)
-model.learn(total_timesteps=1_000_000)
-
-episodes = 10
-
-for ep in range(episodes):
-    obs = env.reset()
-    for i in range(1_000):
-        action, _states = model.predict(obs, deterministic=True)
-        obs, reward, done, info = env.step(action)
-        # env.render()
+model = PPO("MlpPolicy", env, verbose=1, tensorboard_log=logdir)
+TIMESTEPS = 1_000_000
+for i in range(1, 10):
+    model.learn(total_timesteps=TIMESTEPS, reset_num_timesteps=False, tb_log_name=f"PPO{int(time.time())}")
+    model.save(f"{models_dir}/{TIMESTEPS*i}")
 
 env.close()

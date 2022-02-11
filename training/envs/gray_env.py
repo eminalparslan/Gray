@@ -14,8 +14,8 @@ class GrayEnv(gym.Env):
         # super(GrayEnv, self).__init__()
         self.action_space = gym.spaces.multi_discrete.MultiDiscrete(8*[7])
         self.observation_space = gym.spaces.box.Box(
-            low=np.array([-10, -10] + [-pi] * 8, dtype=np.float32),
-            high=np.array([10, 10] + [pi] * 8, dtype=np.float32))
+            low=np.array([-5] * 6 + [-0.2*pi] * 8 + [-10] * 8, dtype=np.float32),
+            high=np.array([5] * 6 + [0.2*pi] * 8 + [10] * 8, dtype=np.float32))
         self.np_random, _ = gym.utils.seeding.np_random()
 
         self.client = p.connect(p.GUI)
@@ -27,17 +27,25 @@ class GrayEnv(gym.Env):
         self.reset()
 
     def step(self, action):
-        self.gray.apply_action(action)
+        jitterPunishment = self.gray.apply_action(action)
         p.stepSimulation()
         self.counter += 1
-        obs = self.gray.get_observation()
 
-        # Compute rewards
-        reward = action[2] * 10.0 - action[3] * 5.0
+        # xyz_pos, rpy
+        posOri = self.gray.get_pos()
+        reward = posOri[0] * 1_000.0 - posOri[1] * 1_000.0 - jitterPunishment * 15.0 # reward high z_pos value
+        if not (pi/3) < posOri[3] < (2*pi/3):
+            reward -= 10_000.0
+            print("************************ROLL*********************************")
+        if not -0.3 < posOri[4] < 0.3:
+            reward -= 10_000.0
+            print("************************PITCH*******************************")
 
-        if self.counter == 2000:
+        if self.counter == 3000:
             self.done = True
 
+        # xyz_vel, w_xyz_ang_vel, jointPos*8, jointVel*8
+        obs = self.gray.get_observation()
         return obs, reward, self.done, dict()
 
     def reset(self):
@@ -47,13 +55,13 @@ class GrayEnv(gym.Env):
         Plane(self.client)
         self.gray = Gray(self.client)
 
-        # Useless for now
         self.done = False
         self.counter = 0
 
         obs = self.gray.get_observation()
         return obs
  
+    # Seems useless for now
     def render(self):
         if self.rendered_img is None:
             self.rendered_img = plt.imshow(np.zeros((100, 100, 4)))
