@@ -1,21 +1,29 @@
 import gym
 from stable_baselines3 import PPO
+from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
 import training
 import os
 import time
 
-models_dir = f"models/PPO{int(time.time())}"
-logdir = "logs"
+# PARALELLIZATION
 
-os.makedirs(models_dir, exist_ok=True)
-os.makedirs(logdir, exist_ok=True)
-
-env = gym.make("Gray-v0")
-
-model = PPO("MlpPolicy", env, verbose=1, tensorboard_log=logdir)
+MODEL_NAME = "PPO_DOUBLE_GRAV_JOINT_STD"
 TIMESTEPS = 1_000_000
-for i in range(1, 10):
-    model.learn(total_timesteps=TIMESTEPS, reset_num_timesteps=False, tb_log_name=f"PPO{int(time.time())}")
+EPISODES = 10
+TENSORBOARD_LOG_DIR = None # "logs"
+
+models_dir = f"models/{MODEL_NAME}_{int(time.time())}"
+if not TENSORBOARD_LOG_DIR is None:
+    os.makedirs(TENSORBOARD_LOG_DIR, exist_ok=True)
+os.makedirs(models_dir, exist_ok=True)
+
+env = DummyVecEnv([lambda: gym.make("Gray-v0")])
+env = VecNormalize(env, norm_obs=True, norm_reward=True)
+
+model = PPO("MlpPolicy", env, verbose=0, tensorboard_log=TENSORBOARD_LOG_DIR)
+
+for i in range(1, EPISODES + 1):
+    model.learn(total_timesteps=TIMESTEPS, reset_num_timesteps=False, tb_log_name=f"{MODEL_NAME}_{int(time.time())}")
     model.save(f"{models_dir}/{TIMESTEPS*i}")
 
 env.close()

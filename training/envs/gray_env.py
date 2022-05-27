@@ -1,86 +1,80 @@
 import gym
 import numpy as np
 import pybullet as p
-import matplotlib.pyplot as plt
 from math import pi
+import time
 
 from training.resources.plane import Plane
 from training.resources.gray import Gray
+from training.constants import *
 
+
+# create Open AI gym environment
 class GrayEnv(gym.Env):
+    # FIXME no idea what this does
     metadata = {"render.modes": ["human"]}
 
     def __init__(self):
+        # FIXME don't know if I need this
         # super(GrayEnv, self).__init__()
-        self.action_space = gym.spaces.multi_discrete.MultiDiscrete(8*[7])
+
+        # create the action space for the neural network
+        # each of the 8 joints have 7 possible discrete actions
+        self.action_space = gym.spaces.multi_discrete.MultiDiscrete(NUM_JOINTS*[NUM_DELTAS])
+
+        # if I want to use the continuous action space
+        #self.action_space = gym.spaces.box.Box(
+        #    low=np.array([-0.2 * pi] * 8, dtype=np.float32),
+        #    high=np.array([0.2 * pi] * 8, dtype=np.float32)
+        #)
+
+        # observation space for the neural network
+        # xyz_vel (3), xyz_ang_vel (3), jointPos (8), jointVel (8), orientation quaternion (4), height (1)
         self.observation_space = gym.spaces.box.Box(
-            low=np.array([-5] * 6 + [-0.2*pi] * 8 + [-10] * 8, dtype=np.float32),
-            high=np.array([5] * 6 + [0.2*pi] * 8 + [10] * 8, dtype=np.float32))
-        self.np_random, _ = gym.utils.seeding.np_random()
+            low=np.array([-5] * 6 + [-0.2*pi] * 8 + [-10] * 12 + [0]),
+            high=np.array([5] * 6 + [0.2*pi] * 8 + [10] * 12 + [3])
+        )
+        
+        # seed if I want the same random numbers generated every run
+        self.seed()
 
+        # connect to the physics server
         self.client = p.connect(p.GUI)
-        p.setTimeStep(1/30, self.client)
+        # set up physics simulation
+        p.setTimeStep(TIMESTEP, self.client)
+        p.configureDebugVisualizer(p.COV_ENABLE_GUI, ENABLE_GUI)
 
-        self.counter = 0
-
-        self.rendered_img = None
         self.reset()
 
     def step(self, action):
-        jitterPunishment = self.gray.apply_action(action)
+        time.sleep(TIMESTEP)
+
+        self.gray.apply_action(action)
+        
         p.stepSimulation()
-        self.counter += 1
 
-        # xyz_pos, rpy
-        posOri = self.gray.get_pos()
-        reward = posOri[0] * 1_000.0 - posOri[1] * 1_000.0 - jitterPunishment * 15.0 # reward high z_pos value
-        if not (pi/3) < posOri[3] < (2*pi/3):
-            reward -= 10_000.0
-            print("************************ROLL*********************************")
-        if not -0.3 < posOri[4] < 0.3:
-            reward -= 10_000.0
-            print("************************PITCH*******************************")
-
-        if self.counter == 3000:
+        self.timestep_counter += 1
+        # TODO done iff no movement in x direction for a certain amount of time
+        if self.timestep_counter == TIMESTEPS_PER_EP:
             self.done = True
 
-        # xyz_vel, w_xyz_ang_vel, jointPos*8, jointVel*8
+        # xyz_vel, xyz_ang_vel, jointPos*8, jointVel*8, orientation quaternion, height
         obs = self.gray.get_observation()
+        reward = self.gray.get_state_reward(self.timestep_counter)
         return obs, reward, self.done, dict()
 
     def reset(self):
         p.resetSimulation(self.client)
-        p.setGravity(0, 0, -10)
+        p.setGravity(0, 0, -9.8)
 
-        Plane(self.client)
-        self.gray = Gray(self.client)
+        Plane()
+        self.gray = Gray()
 
         self.done = False
-        self.counter = 0
+        self.timestep_counter = 0
 
-        obs = self.gray.get_observation()
-        return obs
+        return self.gray.get_observation() 
  
-    # Seems useless for now
-    def render(self):
-        if self.rendered_img is None:
-            self.rendered_img = plt.imshow(np.zeros((100, 100, 4)))
-        
-        proj_matrix = p.computeProjectionMatrixFOV(fov=80, aspect=1, nearVal=0.01, farVal=100)
-        pos, ori = [list(l) for l in p.getBasePositionAndOrientation(self.gray.gray_id, self.gray.client_id)]
-        pos[2] = 0.2
-
-        rot_mat = np.array(p.getMatrixFromQuaternion(ori)).reshape(3, 3)
-        camera_vec = np.matmul(rot_mat, np.array([1, 0, 0]))
-        up_vec = np.matmul(rot_mat, np.array([0, 0, 1]))
-        view_matrix = p.computeViewMatrix(pos, pos + camera_vec, up_vec)
-
-        frame = p.getCameraImage(100, 100, view_matrix, proj_matrix)[2]
-        frame = np.reshape(frame, (100, 100, 4))
-        self.rendered_img.set_data(frame)
-        plt.draw()
-        plt.pause(.00001)
-
     def close(self):
         p.disconnect(self.client)
 

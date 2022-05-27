@@ -1,3 +1,7 @@
 desktop.ini
 __pycache__
 old_logs
+models/old
+
+
+training/resources/meshes

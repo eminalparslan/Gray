@@ -1,12 +1,16 @@
 import gym
 from stable_baselines3 import PPO
+from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
 import training
 
-env = gym.make("Gray-v0")
+env = DummyVecEnv([lambda: gym.make("Gray-v0")])
+env = VecNormalize(env)
+env.training = False
+env.norm_reward = False
 env.reset()
 
-models_dir = "models/PPO"
-model_path = f"{models_dir}1644530595/1500000.zip"
+models_dir = "models/"
+model_path = f"{models_dir}PPO_60HZ_VEC_NORMALIZE_1644900974/5000000.zip"
 
 model = PPO.load(model_path, env=env)
 
