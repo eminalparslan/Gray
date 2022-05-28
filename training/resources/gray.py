@@ -65,28 +65,41 @@ class Gray:
         #reward -= abs(eulerOri[1]) * 1.0 # PITCH up: -pi/2 down: pi/2
 
         # punish for not moving joints enough
-        joint_pos_std = 0
+        joint_pos_std_penalty = 0
         if counter > self.memory_size:
             joint_std_weight = 0.015
-            joint_pos_std = joint_std_weight / np.mean(np.std(self.memory, axis=0))
+            joint_pos_std_penalty = joint_std_weight / np.mean(np.std(self.memory, axis=0))
+        
+        # bonus for not changing direction in each joint
+        no_dir_change_bonus = 0
+        if counter > 2:
+            dir_change_weight = 0.1
+            num_dir_change = np.count_nonzero((np.sign(self.memory[len(self.memory) - 1]) + np.sign(self.memory[len(self.memory) - 2])) == 0)
+            # find proportion of joints that have not changed direction
+            no_dir_change_bonus = (1 - (num_dir_change / len(self.joints))) * dir_change_weight
 
         # reward for moving forward
         x_dis_weight = 10.0
-        x_dis = (self.pos[0] - self.prev_pos[0]) * x_dis_weight
+        x_dis_reward = (self.pos[0] - self.prev_pos[0]) * x_dis_weight
 
         # punish little for energy consumption (joint torques)
         energy_weight = 0.01
-        energy = np.dot(np.abs(self.joint_vel), np.abs(self.joint_tor)) * TIMESTEP * energy_weight
+        energy_penalty = np.dot(np.abs(self.joint_vel), np.abs(self.joint_tor)) * TIMESTEP * energy_weight
 
-        reward = x_dis - energy - joint_pos_std
+        total_reward = x_dis_reward - energy_penalty - joint_pos_std_penalty + no_dir_change_bonus
 
-        # log every 500 timesteps
-        if counter % 500 == 0:
-            self.logging(x_dis=x_dis, energy=-energy, delta_std=-joint_pos_std) 
+        # log rewards
+        if counter % 200 == 0:
+            print(f"[INFO] Rewards (Timestep: {counter}):")
+            self.logging(x_dis_reward=x_dis_reward,
+                energy_penalty=energy_penalty,
+                joint_pos_std_penalty=joint_pos_std_penalty,
+                no_dir_change_bonus=no_dir_change_bonus,
+                total_reward=total_reward)
 
-        return reward
+        return total_reward
     
     def logging(self, **kwargs):
         print("[INFO] Rewards:")
         for key, val in kwargs.items():
-            print("%10s: %5f" % (key, val))
+            print("%24s: %6f" % (key, val))

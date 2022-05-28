@@ -1,0 +1,13 @@
+speed up pybullet simulation (use 100% gpu)
+	parallelize if i can't use 100% gpu
+
+train various models, pick best one, load and continue training with on timer reset
+
+refactor code
+
+does vecnormalize do anything? (test after finding satisfactory model)
+
+reward for little variation in roll (make it have each leg touch the ground)
+
+double gravity again?
+
