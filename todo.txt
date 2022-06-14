@@ -1,7 +1,8 @@
-speed up pybullet simulation (use 100% gpu)
-	parallelize if i can't use 100% gpu
+parallelize if i can't use 100% gpu 
+	DummyVecEnv
 
-train various models, pick best one, load and continue training with on timer reset
+retrain latest model: 
+        stop episode only after not traveling far enough in x direction   
 
 refactor code
 
@@ -10,4 +11,10 @@ does vecnormalize do anything? (test after finding satisfactory model)
 reward for little variation in roll (make it have each leg touch the ground)
 
 double gravity again?
+
+foot contact with ground punishment (but not irl, just for training)
+
+predict foot movements instead of joint position (last resort or if I want to really improve this)
+
+maybe add rewards and punishments later on in training (like stabilization (minimizing roll variation))
 

@@ -1,1 +1,2 @@
-delta_std random movement = -0.03
+53 mins per 200_000 steps (TIMESTEPS_PER_EP = 1200)
+
