@@ -20,7 +20,7 @@ class GrayEnv(gym.Env):
         self.action_space = gym.spaces.multi_discrete.MultiDiscrete(NUM_JOINTS*[NUM_DELTAS])
 
         # continuous observation space for the neural network
-        # xyz_vel (3), xyz_ang_vel (3), jointPos (8), jointVel (8), orientation quaternion (4), height (1)
+        # xyz_vel (3), xyz_ang_vel (3), jointPos (8), ~jointVel (8)~, orientation quaternion (4), height (1)
         self.observation_space = gym.spaces.box.Box(
             low=np.array([-5] * 6 + [-0.2*pi] * 8 + [-10] * 12 + [0]),
             high=np.array([5] * 6 + [0.2*pi] * 8 + [10] * 12 + [3])
@@ -37,7 +37,7 @@ class GrayEnv(gym.Env):
 
     def step(self, action):
         # for "real time" simulation, uncomment following line
-        time.sleep(TIMESTEP)
+        #time.sleep(TIMESTEP)
 
         self.gray.apply_action(action)
         p.stepSimulation()

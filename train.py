@@ -1,16 +1,14 @@
-import gym
 from stable_baselines3 import PPO
-from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
+from stable_baselines3.common.vec_env import VecNormalize
 from stable_baselines3.common.cmd_util import make_vec_env
-import training
 import os
 import time
 
-TIMESTEPS = 200_000
-EPISODES = 20
+TIMESTEPS = 500_000
+EPISODES = 10
 
 models_dir = "models"
-model_name = "TESTING_PYBULLET_NON_REALTIME"
+model_name = "GRAY_LARGER_STD_PENALTY"
 model = f"{model_name}_{int(time.time())}"
 model_path = os.path.join(models_dir, model)
 os.makedirs(model_path, exist_ok=True)

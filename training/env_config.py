@@ -8,7 +8,7 @@ NUM_DELTAS = 7
 # timestep for simulation in seconds
 TIMESTEP = 1/100
 # if 'None', then episode will end after robot stops moving forward
-TIMESTEPS_PER_EP = 1200
+TIMESTEPS_PER_EP = 2000
 # if robot hasn't traveled more than this distance in the past second, episode is done
 # only works if TIMESTEPS_PER_EP is None
 DONE_EPSILON = 0
@@ -20,5 +20,6 @@ REWARD_LOG_EVERY = 400
 # reward weights
 X_DIS_WEIGHT = 10.0
 ENERGY_WEIGHT = 0.01
-JOINT_STD_WEIGHT = 0.015
+#JOINT_STD_WEIGHT = 0.015
+JOINT_STD_WEIGHT = 0.025
 DIR_WEIGHT = 0.1

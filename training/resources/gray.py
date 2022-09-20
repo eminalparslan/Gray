@@ -1,5 +1,3 @@
-from this import d
-from time import time
 import numpy as np
 import pybullet as p
 from math import pi
@@ -22,13 +20,6 @@ class Gray:
         self.memory_size = int(1 / TIMESTEP)
         self.joint_pos_memory = deque(maxlen=self.memory_size)
         self.pos_memory = deque(maxlen=self.memory_size)
-
-        for joint in range(p.getNumJoints(self.gray_id)):
-            p.changeDynamics(self.gray_id, joint, linearDamping=0, angularDamping=0)
-        #for link in LEG_LINK_INDICES:
-        #    p.changeDynamics(self.gray_id, link, lateralFriction=1.0)
-        #    p.changeDynamics(self.gray_id, link, rollingFriction=1.0)
-        #    p.changeDynamics(self.gray_id, link, spinningFriction=1.0)
 
     def apply_action(self, actions):
         deltas = np.array([STEP_SIZES[action] for action in actions])

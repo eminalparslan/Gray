@@ -7,8 +7,8 @@ import os
 EPISODES = 30
 
 models_dir = "models"
-model = "PPO_NO_DIR_CHANGE_BONUS_1653830591"
-timestep = "4000000.zip"
+model = "GRAY_LARGER_STD_PENALTY_1656221510"
+timestep = "5000000.zip"
 model_path = os.path.join(models_dir, model, timestep)
 
 stats_path = os.path.join(models_dir, model, "vec_normalize.pkl")
@@ -16,6 +16,7 @@ stats_path = os.path.join(models_dir, model, "vec_normalize.pkl")
 #env = DummyVecEnv([lambda: gym.make("Gray-v0")])
 env = make_vec_env("Gray-v0", n_envs=1)
 env = VecNormalize.load(stats_path, env)
+#env = VecNormalize(env, norm_obs=True, norm_reward=True, clip_obs=10.0)
 
 model = PPO.load(model_path, env=env)
 
