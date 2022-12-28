@@ -37,7 +37,7 @@ class GrayEnv(gym.Env):
 
     def step(self, action):
         # for "real time" simulation, uncomment following line
-        #time.sleep(TIMESTEP)
+        time.sleep(TIMESTEP)
 
         self.gray.apply_action(action)
         p.stepSimulation()
